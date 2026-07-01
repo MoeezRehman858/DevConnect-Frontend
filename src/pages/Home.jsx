@@ -7,7 +7,7 @@ function Home() {
     <div className="h-screen flex flex-col justify-center items-center bg-gradient-to-r from-blue-500 to-purple-600 text-white">
 
       <h1 className="text-4xl font-bold mb-4 animate-bounce">
-        DevConnect 🚀
+        DevConnect 
       </h1>
 
       <p className="mb-6 text-lg">

@@ -3,13 +3,21 @@ import API from "../services/api";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
+const gradients = [
+  "linear-gradient(135deg, #667eea, #764ba2)",
+  "linear-gradient(135deg, #f093fb, #f5576c)",
+  "linear-gradient(135deg, #4facfe, #00f2fe)",
+  "linear-gradient(135deg, #43e97b, #38f9d7)",
+  "linear-gradient(135deg, #fa709a, #fee140)",
+];
+const getGradient = (name) =>
+  gradients[(name?.charCodeAt(0) || 0) % gradients.length];
+
 function Profile() {
   const { id } = useParams();
   const [profileUser, setProfileUser] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: "", email: "", bio: "", skills: ""
-  });
+  const [editForm, setEditForm] = useState({ name: "", email: "", bio: "", skills: "" });
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
   const { user: currentUser, setUser: setCurrentUser } = useContext(AuthContext);
@@ -19,20 +27,15 @@ function Profile() {
       try {
         const { data } = await API.get(`/users/${id}`);
         setProfileUser(data);
-      } catch (err) {
-        console.log(err);
-      }
+      } catch (err) { console.log(err); }
     };
     if (id) fetchUser();
   }, [id]);
 
   const isFollowing = currentUser?.following?.some(
-    (f) => (typeof f === "object" ? f._id : f).toString()
-      === profileUser?._id?.toString()
+    (f) => (typeof f === "object" ? f._id : f).toString() === profileUser?._id?.toString()
   );
-
-  const isOwnProfile =
-    currentUser?._id?.toString() === profileUser?._id?.toString();
+  const isOwnProfile = currentUser?._id?.toString() === profileUser?._id?.toString();
 
   const handlePictureUpload = async (e) => {
     const file = e.target.files[0];
@@ -42,30 +45,24 @@ function Profile() {
       const formData = new FormData();
       formData.append("profilePicture", file);
       formData.append("token", currentUser.token);
-
       const { data } = await API.post("/users/upload-picture", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       setProfileUser({ ...profileUser, profilePicture: data.profilePicture });
-
       const updatedUser = { ...currentUser, profilePicture: data.profilePicture };
       setCurrentUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
-
     } catch (err) {
       console.log(err);
       alert("Upload failed. Please try again.");
-    } finally {
-      setUploading(false);
-    }
+    } finally { setUploading(false); }
   };
 
   const openEdit = () => {
     setEditForm({
-      name:   profileUser.name   || "",
-      email:  profileUser.email  || "",
-      bio:    profileUser.bio    || "",
+      name: profileUser.name || "",
+      email: profileUser.email || "",
+      bio: profileUser.bio || "",
       skills: profileUser.skills?.join(", ") || "",
     });
     setShowEdit(true);
@@ -73,182 +70,192 @@ function Profile() {
 
   const handleSave = async () => {
     try {
-      const skillsArray = editForm.skills
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s !== "");
-
+      const skillsArray = editForm.skills.split(",").map((s) => s.trim()).filter(Boolean);
       const { data } = await API.put("/users/profile", {
-        name:   editForm.name,
-        email:  editForm.email,
-        bio:    editForm.bio,
-        skills: skillsArray,
-        token:  currentUser.token,
+        name: editForm.name, email: editForm.email,
+        bio: editForm.bio, skills: skillsArray, token: currentUser.token,
       });
-
       setProfileUser({ ...profileUser, ...data });
       const updatedUser = { ...currentUser, ...data };
       setCurrentUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setShowEdit(false);
-    } catch (err) {
-      console.log(err);
-    }
+    } catch (err) { console.log(err); }
   };
 
   const handleFollow = async () => {
     try {
       if (isFollowing) {
         await API.put(`/users/unfollow/${profileUser._id}`);
-        setCurrentUser({
-          ...currentUser,
+        setCurrentUser({ ...currentUser,
           following: currentUser.following.filter(
-            (f) => (typeof f === "object" ? f._id : f).toString()
-              !== profileUser._id.toString()
+            (f) => (typeof f === "object" ? f._id : f).toString() !== profileUser._id.toString()
           ),
         });
-        setProfileUser({
-          ...profileUser,
+        setProfileUser({ ...profileUser,
           followers: profileUser.followers.filter(
-            (f) => (typeof f === "object" ? f._id : f).toString()
-              !== currentUser._id.toString()
+            (f) => (typeof f === "object" ? f._id : f).toString() !== currentUser._id.toString()
           ),
         });
       } else {
         await API.put(`/users/follow/${profileUser._id}`);
-        setCurrentUser({
-          ...currentUser,
-          following: [...(currentUser.following || []), profileUser._id],
-        });
-        setProfileUser({
-          ...profileUser,
-          followers: [...(profileUser.followers || []), currentUser._id],
-        });
+        setCurrentUser({ ...currentUser, following: [...(currentUser.following || []), profileUser._id] });
+        setProfileUser({ ...profileUser, followers: [...(profileUser.followers || []), currentUser._id] });
       }
-    } catch (err) {
-      console.log(err);
-    }
+    } catch (err) { console.log(err); }
   };
 
   if (!profileUser) return (
-    <p className="text-center mt-10 text-gray-400">Loading...</p>
+    <div className="min-h-screen flex items-center justify-center"
+      style={{ background: "linear-gradient(135deg, #f5f7ff, #fdf2f8)" }}>
+      <div className="text-center">
+        <div className="w-16 h-16 rounded-full mx-auto mb-4 animate-pulse"
+          style={{ background: "linear-gradient(135deg, #667eea, #764ba2)" }} />
+        <p className="text-gray-400 font-medium">Loading profile...</p>
+      </div>
+    </div>
   );
 
   return (
-    <div className="max-w-xl mx-auto mt-6 bg-white p-6 rounded-xl shadow">
-
-      <div className="relative w-20 h-20 mb-4">
-        {profileUser.profilePicture ? (
-          <img
-            src={profileUser.profilePicture}
-            alt={profileUser.name}
-            className="w-20 h-20 rounded-full object-cover border-2 border-blue-500"
-          />
-        ) : (
-          <div className="w-20 h-20 bg-blue-500 text-white text-2xl flex items-center justify-center rounded-full">
-            {profileUser.name?.charAt(0).toUpperCase()}
+    <div className="min-h-screen p-6"
+      style={{ background: "linear-gradient(135deg, #f5f7ff 0%, #fdf2f8 50%, #f0fdf4 100%)" }}>
+      <div className="max-w-2xl mx-auto">
+        <div className="rounded-3xl overflow-hidden"
+          style={{ boxShadow: "0 20px 60px rgba(102,126,234,0.15)", border: "1px solid rgba(102,126,234,0.1)" }}>
+          <div className="h-36 relative" style={{ background: getGradient(profileUser.name) }}>
+            <div className="absolute inset-0 opacity-20"
+              style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 0%, transparent 50%)" }} />
           </div>
-        )}
-
-        {isOwnProfile && (
-          <>
-            <button
-              onClick={() => fileInputRef.current.click()}
-              disabled={uploading}
-              className="absolute bottom-0 right-0 w-7 h-7 bg-gray-700 text-white rounded-full flex items-center justify-center text-xs hover:bg-gray-900 transition"
-              title="Change profile picture"
-            >
-              {uploading ? "..." : "📷"}
-            </button>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handlePictureUpload}
-              className="hidden"
-            />
-          </>
-        )}
-      </div>
-
-      <h2 className="text-2xl font-bold">{profileUser.name}</h2>
-      <p className="text-gray-500 text-sm">{profileUser.email}</p>
-
-      {profileUser.bio && (
-        <p className="text-gray-700 mt-3">{profileUser.bio}</p>
-      )}
-
-      {profileUser.skills?.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-3">
-          {profileUser.skills.map((skill, i) => (
-            <span key={i} className="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">
-              {skill}
-            </span>
-          ))}
+          <div className="bg-white px-8 pb-8">
+            <div className="relative -mt-12 mb-4 inline-block">
+              {profileUser.profilePicture ? (
+                <img src={profileUser.profilePicture} alt={profileUser.name}
+                  className="w-24 h-24 rounded-2xl object-cover"
+                  style={{ border: "4px solid white", boxShadow: "0 8px 24px rgba(102,126,234,0.3)" }} />
+              ) : (
+                <div className="w-24 h-24 rounded-2xl flex items-center justify-center text-white text-3xl font-black"
+                  style={{ background: getGradient(profileUser.name),
+                    border: "4px solid white", boxShadow: "0 8px 24px rgba(102,126,234,0.3)" }}>
+                  {profileUser.name?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              {isOwnProfile && (
+                <>
+                  <button onClick={() => fileInputRef.current.click()} disabled={uploading}
+                    className="absolute -bottom-1 -right-1 w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm transition hover:scale-110"
+                    style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", boxShadow: "0 4px 12px rgba(102,126,234,0.4)" }}>
+                    {uploading ? "⏳" : "📷"}
+                  </button>
+                  <input type="file" accept="image/*" ref={fileInputRef} onChange={handlePictureUpload} className="hidden" />
+                </>
+              )}
+            </div>
+            <h2 className="text-2xl font-black text-gray-800">{profileUser.name}</h2>
+            <p className="text-sm text-gray-400 mb-3">{profileUser.email}</p>
+            {profileUser.bio && <p className="text-gray-600 mb-4 leading-relaxed">{profileUser.bio}</p>}
+            {profileUser.skills?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-5">
+                {profileUser.skills.map((skill, i) => (
+                  <span key={i} className="text-xs font-bold px-3 py-1.5 rounded-full text-white"
+                    style={{ background: gradients[i % gradients.length], boxShadow: "0 2px 8px rgba(102,126,234,0.3)" }}>
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-4 mb-5">
+              {[
+                { label: "Followers", value: profileUser.followers?.length || 0 },
+                { label: "Following", value: profileUser.following?.length || 0 },
+              ].map(({ label, value }) => (
+                <div key={label} className="text-center px-6 py-3 rounded-2xl"
+                  style={{ background: "linear-gradient(135deg, #f5f7ff, #fdf2f8)" }}>
+                  <p className="text-2xl font-black"
+                    style={{ background: "linear-gradient(135deg, #667eea, #764ba2)",
+                      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    {value}
+                  </p>
+                  <p className="text-xs text-gray-400 font-medium">{label}</p>
+                </div>
+              ))}
+            </div>
+            {!isOwnProfile ? (
+              <button onClick={handleFollow}
+                className="px-8 py-3 rounded-2xl font-bold text-white transition hover:scale-105 hover:shadow-xl"
+                style={isFollowing
+                  ? { background: "linear-gradient(135deg, #ff6b6b, #ff8e8e)", boxShadow: "0 6px 20px rgba(255,107,107,0.4)" }
+                  : { background: "linear-gradient(135deg, #667eea, #764ba2)", boxShadow: "0 6px 20px rgba(102,126,234,0.4)" }}>
+                {isFollowing ? "✕ Unfollow" : "+ Follow"}
+              </button>
+            ) : (
+              <button onClick={openEdit}
+                className="px-8 py-3 rounded-2xl font-bold transition hover:scale-105"
+                style={{ background: "linear-gradient(135deg, #f5f7ff, #fdf2f8)", color: "#667eea", border: "2px solid #c4b5fd" }}>
+                ✏️ Edit Profile
+              </button>
+            )}
+          </div>
         </div>
-      )}
 
-      <div className="flex gap-6 mt-4">
-        <p><b>{profileUser.followers?.length || 0}</b> Followers</p>
-        <p><b>{profileUser.following?.length || 0}</b> Following</p>
-      </div>
-
-      {!isOwnProfile ? (
-        <button
-          onClick={handleFollow}
-          className={`mt-4 px-4 py-2 rounded text-white transition ${
-            isFollowing ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
-          }`}
-        >
-          {isFollowing ? "Unfollow" : "Follow"}
-        </button>
-      ) : (
-        <button
-          onClick={openEdit}
-          className="mt-4 bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800 transition"
-        >
-          Edit Profile
-        </button>
-      )}
-
-      {showEdit && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-xl font-bold mb-4">Edit Profile</h3>
-
-            <label className="block text-sm text-gray-600 mb-1">Name</label>
-            <input className="w-full border p-2 rounded mb-3" value={editForm.name}
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
-
-            <label className="block text-sm text-gray-600 mb-1">Email</label>
-            <input className="w-full border p-2 rounded mb-3" value={editForm.email}
-              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
-
-            <label className="block text-sm text-gray-600 mb-1">Bio</label>
-            <textarea className="w-full border p-2 rounded mb-3 resize-none" rows={3}
-              placeholder="Tell people about yourself..." value={editForm.bio}
-              onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })} />
-
-            <label className="block text-sm text-gray-600 mb-1">
-              Skills <span className="text-gray-400">(comma separated)</span>
-            </label>
-            <input className="w-full border p-2 rounded mb-4"
-              placeholder="React, Node.js, MongoDB..." value={editForm.skills}
-              onChange={(e) => setEditForm({ ...editForm, skills: e.target.value })} />
-
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setShowEdit(false)}
-                className="px-4 py-2 rounded border text-gray-600 hover:bg-gray-50 transition">
-                Cancel
-              </button>
-              <button onClick={handleSave}
-                className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition">
-                Save Changes
-              </button>
+        {showEdit && (
+          <div className="fixed inset-0 flex items-center justify-center z-50"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}>
+            <div className="w-full max-w-md mx-4 rounded-3xl p-8"
+              style={{ background: "white", boxShadow: "0 30px 80px rgba(0,0,0,0.2)" }}>
+              <h3 className="text-xl font-black text-gray-800 mb-6">✏️ Edit Profile</h3>
+              {[
+                { label: "Name", key: "name", type: "text" },
+                { label: "Email", key: "email", type: "email" },
+              ].map(({ label, key, type }) => (
+                <div key={key} className="mb-4">
+                  <label className="block text-sm font-bold text-gray-600 mb-1">{label}</label>
+                  <input type={type}
+                    className="w-full px-4 py-3 rounded-2xl outline-none text-gray-700 text-sm"
+                    style={{ background: "#f8f9ff", border: "2px solid transparent", transition: "border 0.3s" }}
+                    value={editForm[key]}
+                    onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                    onFocus={(e) => e.target.style.border = "2px solid #a78bfa"}
+                    onBlur={(e) => e.target.style.border = "2px solid transparent"} />
+                </div>
+              ))}
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-600 mb-1">Bio</label>
+                <textarea className="w-full px-4 py-3 rounded-2xl outline-none text-gray-700 text-sm resize-none"
+                  style={{ background: "#f8f9ff", border: "2px solid transparent", transition: "border 0.3s" }}
+                  rows={3} placeholder="Tell people about yourself..."
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  onFocus={(e) => e.target.style.border = "2px solid #a78bfa"}
+                  onBlur={(e) => e.target.style.border = "2px solid transparent"} />
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-bold text-gray-600 mb-1">
+                  Skills <span className="text-gray-400 font-normal">(comma separated)</span>
+                </label>
+                <input className="w-full px-4 py-3 rounded-2xl outline-none text-gray-700 text-sm"
+                  style={{ background: "#f8f9ff", border: "2px solid transparent", transition: "border 0.3s" }}
+                  placeholder="React, Node.js, MongoDB..."
+                  value={editForm.skills}
+                  onChange={(e) => setEditForm({ ...editForm, skills: e.target.value })}
+                  onFocus={(e) => e.target.style.border = "2px solid #a78bfa"}
+                  onBlur={(e) => e.target.style.border = "2px solid transparent"} />
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setShowEdit(false)}
+                  className="flex-1 py-3 rounded-2xl font-bold text-gray-500 transition hover:scale-105"
+                  style={{ background: "#f8f9ff", border: "2px solid #e5e7eb" }}>
+                  Cancel
+                </button>
+                <button onClick={handleSave}
+                  className="flex-1 py-3 rounded-2xl font-bold text-white transition hover:scale-105"
+                  style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", boxShadow: "0 6px 20px rgba(102,126,234,0.4)" }}>
+                  Save Changes ✨
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
