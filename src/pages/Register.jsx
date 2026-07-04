@@ -3,13 +3,28 @@ import API from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
+const animationStyles = `
+  @keyframes popUp {
+    0%   { opacity: 0; transform: scale(0.92) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-pop         { animation: popUp    0.5s ease both; }
+  .animate-fadeInUp { animation: fadeInUp 0.4s ease both; }
+`;
+
 function Register() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const { data } = await API.post("/auth/register", form);
       localStorage.setItem("user", JSON.stringify(data));
@@ -17,66 +32,57 @@ function Register() {
       navigate("/feed");
     } catch (error) {
       alert(error.response?.data?.message || error.message);
-    }
+    } finally { setLoading(false); }
   };
 
-  const inputStyle = {
-    background: "rgba(255,255,255,0.9)",
-    border: "2px solid transparent",
-    transition: "all 0.3s"
-  };
+  const fields = [
+    { label: "Full Name", type: "text",     key: "name",     placeholder: "John Doe",       delay: "0.2s" },
+    { label: "Email",     type: "email",    key: "email",    placeholder: "you@example.com", delay: "0.3s" },
+    { label: "Password",  type: "password", key: "password", placeholder: "••••••••",        delay: "0.4s" },
+  ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%)" }}>
-      <div className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-20"
-        style={{ background: "radial-gradient(circle, #fff 0%, transparent 70%)" }} />
-      <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full opacity-10"
-        style={{ background: "radial-gradient(circle, #fff 0%, transparent 70%)" }} />
-      <div className="relative z-10 w-full max-w-md mx-4 rounded-3xl p-8"
-        style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.3)", boxShadow: "0 25px 50px rgba(0,0,0,0.2)" }}>
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-            style={{ background: "linear-gradient(135deg, #fff 0%, #fce7f3 100%)" }}>
-            <span className="text-2xl font-black"
-              style={{ background: "linear-gradient(135deg, #f093fb, #f5576c)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              DC
-            </span>
+    <>
+      <style>{animationStyles}</style>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0f172a" }}>
+        <div className="card-pop w-full max-w-md mx-4 rounded-2xl p-8"
+          style={{ background: "#1e293b", border: "1px solid #334155", boxShadow: "0 20px 40px rgba(0,0,0,0.4)" }}>
+
+          <div className="mb-8 animate-fadeInUp" style={{ animationDelay: "0.1s" }}>
+            <h1 className="text-2xl font-bold text-white mb-1">DevConnect</h1>
+            <p className="text-sm" style={{ color: "#64748b" }}>Create your account</p>
           </div>
-          <h1 className="text-3xl font-black text-white">Join DevConnect!</h1>
-          <p className="text-white opacity-70 mt-1">Connect with developers worldwide</p>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {[
-            { label: "Full Name", type: "text", key: "name", placeholder: "John Doe" },
-            { label: "Email", type: "email", key: "email", placeholder: "you@example.com" },
-            { label: "Password", type: "password", key: "password", placeholder: "••••••••" }
-          ].map(({ label, type, key, placeholder }) => (
-            <div key={key}>
-              <label className="block text-white text-sm font-medium mb-2 opacity-90">{label}</label>
-              <input type={type}
-                className="w-full px-4 py-3 rounded-xl outline-none text-gray-800 font-medium"
-                style={inputStyle}
-                placeholder={placeholder}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                onFocus={(e) => e.target.style.border = "2px solid #f9a8d4"}
-                onBlur={(e) => e.target.style.border = "2px solid transparent"} />
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {fields.map(({ label, type, key, placeholder, delay }) => (
+              <div key={key} className="animate-fadeInUp" style={{ animationDelay: delay }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#94a3b8" }}>{label}</label>
+                <input type={type}
+                  className="w-full px-4 py-3 rounded-xl outline-none text-white text-sm transition-all duration-200"
+                  style={{ background: "#0f172a", border: "1px solid #334155" }}
+                  placeholder={placeholder}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  onFocus={(e) => e.target.style.border = "1px solid #6366f1"}
+                  onBlur={(e) =>  e.target.style.border = "1px solid #334155"} />
+              </div>
+            ))}
+            <div className="animate-fadeInUp" style={{ animationDelay: "0.5s" }}>
+              <button type="submit" disabled={loading}
+                className="w-full py-3 rounded-xl font-semibold text-sm text-white transition hover:opacity-90 active:scale-95"
+                style={{ background: "#6366f1" }}>
+                {loading ? "Creating account..." : "Create Account"}
+              </button>
             </div>
-          ))}
-          <button type="submit"
-            className="w-full py-3 rounded-xl font-bold text-white text-lg mt-2 transition-all duration-300 hover:scale-105 hover:shadow-xl active:scale-95"
-            style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", boxShadow: "0 10px 30px rgba(102,126,234,0.4)" }}>
-            Create Account 🚀
-          </button>
-        </form>
-        <p className="text-center text-white opacity-80 mt-6 text-sm">
-          Already have an account?{" "}
-          <span className="font-bold cursor-pointer underline hover:text-yellow-300 transition"
-            onClick={() => navigate("/login")}>Sign in</span>
-        </p>
+          </form>
+
+          <p className="text-sm mt-6 animate-fadeInUp" style={{ color: "#64748b", animationDelay: "0.6s" }}>
+            Already have an account?{" "}
+            <span className="font-medium cursor-pointer" style={{ color: "#6366f1" }}
+              onClick={() => navigate("/login")}>Sign in</span>
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
