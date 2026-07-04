@@ -45,44 +45,43 @@ function Navbar() {
   };
 
   return (
-    <div className="sticky top-0 z-50 px-6 py-3 flex justify-between items-center"
-      style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        boxShadow: "0 4px 20px rgba(102,126,234,0.4)" }}>
+    <div className="sticky top-0 z-50 flex justify-between items-center px-6 py-4"
+      style={{ background: "#1e293b", borderBottom: "1px solid #334155" }}>
 
-      <h1 className="text-2xl font-black text-white cursor-pointer tracking-tight hover:scale-105 transition"
-        onClick={() => navigate("/feed")}>
-        Dev<span style={{ color: "#fbbf24" }}>Connect</span> ⚡
+      <h1 className="text-lg font-bold cursor-pointer text-white" onClick={() => navigate("/feed")}>
+        Dev<span style={{ color: "#6366f1" }}>Connect</span>
       </h1>
 
       {user && (
         <div className="flex items-center gap-4">
           <div className="relative" ref={searchRef}>
-            <div className="flex items-center rounded-full px-4 py-2 gap-2"
-              style={{ background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.3)" }}>
-              <span className="text-white opacity-70">🔍</span>
-              <input type="text"
-                className="bg-transparent outline-none text-white text-sm w-44"
-                placeholder="Search developers..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => query.trim() && setShowDropdown(true)} />
-            </div>
+            <input type="text"
+              className="px-4 py-2 rounded-xl text-sm outline-none text-white"
+              style={{ background: "#0f172a", border: "1px solid #334155", width: "200px", transition: "border 0.2s" }}
+              placeholder="Search users..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={(e) => { e.target.style.border = "1px solid #6366f1"; query.trim() && setShowDropdown(true); }}
+              onBlur={(e) => e.target.style.border = "1px solid #334155"} />
+
             {showDropdown && (
-              <div className="absolute top-12 left-0 w-72 rounded-2xl overflow-hidden z-50"
-                style={{ background: "white", boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
-                  border: "1px solid rgba(102,126,234,0.2)" }}>
+              <div className="absolute top-11 left-0 w-64 rounded-xl overflow-hidden z-50"
+                style={{ background: "#1e293b", border: "1px solid #334155", boxShadow: "0 10px 30px rgba(0,0,0,0.4)" }}>
                 {results.length === 0 ? (
-                  <p className="text-sm text-gray-400 p-4 text-center">No users found</p>
+                  <p className="text-sm p-4 text-center" style={{ color: "#64748b" }}>No users found</p>
                 ) : results.map((u) => (
                   <div key={u._id} onClick={() => handleSelect(u._id)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-purple-50 cursor-pointer transition">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                      style={{ background: "linear-gradient(135deg, #667eea, #764ba2)" }}>
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer transition"
+                    style={{ borderBottom: "1px solid #334155" }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "#0f172a"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{ background: "#6366f1" }}>
                       {u.name?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-gray-800">{u.name}</p>
-                      <p className="text-xs text-gray-400">{u.followers?.length || 0} followers</p>
+                      <p className="text-sm font-medium text-white">{u.name}</p>
+                      <p className="text-xs" style={{ color: "#64748b" }}>{u.followers?.length || 0} followers</p>
                     </div>
                   </div>
                 ))}
@@ -91,16 +90,14 @@ function Navbar() {
           </div>
 
           <div onClick={() => navigate(`/profile/${user._id}`)}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer transition hover:scale-110"
-            style={{ background: "linear-gradient(135deg, #fbbf24, #f59e0b)", color: "white",
-              boxShadow: "0 4px 12px rgba(251,191,36,0.4)" }}>
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold cursor-pointer transition hover:opacity-80"
+            style={{ background: "#6366f1", color: "white" }}>
             {user.name?.charAt(0).toUpperCase()}
           </div>
 
           <button onClick={handleLogout}
-            className="px-4 py-2 rounded-full text-sm font-bold transition hover:scale-105"
-            style={{ background: "rgba(255,255,255,0.2)", color: "white",
-              border: "1px solid rgba(255,255,255,0.4)" }}>
+            className="px-4 py-2 rounded-xl text-sm font-medium transition hover:opacity-80"
+            style={{ background: "#0f172a", color: "#94a3b8", border: "1px solid #334155" }}>
             Logout
           </button>
         </div>
